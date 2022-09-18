@@ -1,3 +1,4 @@
+mod mandelbrot;
 mod pixel;
 mod ppm;
 use std::fs;
@@ -33,9 +34,7 @@ fn main() {
     for y in 0..height {
         for x in 0..width {
             let pixel = &mut pixels[i];
-            let r = x as u8;
-            let g = y as u8;
-            let b = 0;
+            let (r, g, b) = mandelbrot::get_color_at(x as f64 / width as f64 * 3.5 - 2.5, y as f64 / height as f64 * 2.0 - 1.0, args.max_iterations);
             pixel.set(r, g, b);
             i += 1;
         }
