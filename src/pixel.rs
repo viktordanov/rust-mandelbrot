@@ -16,9 +16,27 @@ impl Pixel {
         self.b = b;
     }
 
-	pub fn make_brighter(&mut self, amount: u8) {
-		self.r = self.r.saturating_add(amount);
-		self.g = self.g.saturating_add(amount);
-		self.b = self.b.saturating_add(amount);
-	}
+    pub fn make_brighter(&mut self, amount: u8) {
+        self.r = self.r.saturating_add(amount);
+        self.g = self.g.saturating_add(amount);
+        self.b = self.b.saturating_add(amount);
+    }
+}
+
+pub type Image = Vec<Pixel>;
+
+pub trait Persistable {
+    fn save(&self, path: &str, width: u32, height: u32) -> Result<(), std::io::Error>;
+}
+ 
+
+pub fn image_to_byte_array(image: &Image) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    for pixel in image {
+        bytes.push(pixel.r);
+        bytes.push(pixel.g);
+        bytes.push(pixel.b);
+        bytes.push(0xFF);
+    }
+    bytes
 }
