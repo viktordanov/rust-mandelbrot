@@ -1,5 +1,10 @@
 # Simple Mandelbrot renderer
 
+<p align="center">
+<img align="center" src="./docs/fractal.png" />
+</p>
+
+
 This project mainly serves as an exercise for the Rust programming language  and its ecosystem. The goal is to create a simple Mandelbrot renderer that can be used to create images of the Mandelbrot set.
 
 ## Usage

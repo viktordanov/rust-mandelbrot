@@ -2,7 +2,6 @@ mod mandelbrot;
 mod pixel;
 mod png;
 mod ppm;
-use std::fs;
 
 use clap::Parser;
 use pixel::{Image, Persistable, Pixel};
@@ -61,11 +60,11 @@ fn main() {
 }
 
 fn write_frame(args: &Args, frame_i: usize) {
-    let width = args.width * args.scale as u32;
-    let height = args.height * args.scale as u32;
+    let width: f64 = (args.width * args.scale as u32).into();
+    let height: f64 = (args.height * args.scale as u32).into();
     let mut image: Image = vec![Pixel::new(0, 0, 0); (width * height) as usize];
 
-    let chunk_size = (width / 16) as usize;
+    let chunk_size = (width / 16_f64) as usize;
     image
         .par_chunks_mut(chunk_size)
         .enumerate()
@@ -76,13 +75,26 @@ fn write_frame(args: &Args, frame_i: usize) {
             let mut i = 0;
             for pixel_i in start..end {
                 // calculate the pixel's x and y coordinates with zoom and pan
-                let x = (pixel_i % width as usize) as f64 / width as f64 * 3.5 - 2.5 + args.x;
-                let y = (pixel_i / width as usize) as f64 / height as f64 * 2.0 - 1.0 + args.y;
+                let mut x = (pixel_i % width as usize) as f64 / width * 3.5;
+                let mut y = (pixel_i / width as usize) as f64 / height * 2.0;
 
-                // zoom in center
-                let x = x / args.zoom;
-                let y = y / args.zoom;
-                let (r, g, b) = mandelbrot::get_color_at(x as f64, y as f64, args.max_iterations);
+                // center coord
+                x -= 3.5 / 2.0;
+                y -= 2.0 / 2.0;
+
+                // zoom
+                x /= args.zoom;
+                y /= args.zoom;
+
+                // undo center
+                x += 3.5 / 2.0;
+                y += 2.0 / 2.0;
+
+                // pan
+                x += args.x - 2.5;
+                y += args.y - 1.0;
+
+                let (r, g, b) = mandelbrot::get_color_at(x, y, args.max_iterations);
 
                 let pixel = Pixel::new(r as u8, g as u8, b as u8);
                 chunk[i] = pixel;
@@ -91,7 +103,7 @@ fn write_frame(args: &Args, frame_i: usize) {
         });
 
     let path = format!("frame_{}.png", frame_i);
-    match image.save(&path, width, height) {
+    match image.save(&path, width as u32, height as u32) {
         Ok(_) => println!("Saved frame {} to {}", frame_i, path),
         Err(e) => println!("Error saving frame {}: {}", frame_i, e),
     };
