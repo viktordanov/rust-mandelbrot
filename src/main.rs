@@ -1,13 +1,14 @@
 mod mandelbrot;
 mod pixel;
+mod png;
 mod ppm;
 use std::fs;
 
 use clap::Parser;
-use pixel::Pixel;
+use pixel::{Image, Persistable, Pixel};
 use rayon::prelude::*;
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// Name of the person to greet
@@ -38,15 +39,34 @@ struct Args {
     y: f64,
 }
 
+impl std::fmt::Debug for Args {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Args")
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .field("scale", &self.scale)
+            .field("max_iterations", &self.max_iterations)
+            .field("output", &self.output)
+            .field("zoom", &self.zoom)
+            .field("x", &self.x)
+            .field("y", &self.y)
+            .finish()
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
+    write_frame(&args, 0);
+}
+
+fn write_frame(args: &Args, frame_i: usize) {
     let width = args.width * args.scale as u32;
     let height = args.height * args.scale as u32;
-    let mut pixels = vec![Pixel::new(0, 0, 0); (width * height) as usize];
+    let mut image: Image = vec![Pixel::new(0, 0, 0); (width * height) as usize];
 
     let chunk_size = (width / 16) as usize;
-    pixels
+    image
         .par_chunks_mut(chunk_size)
         .enumerate()
         .for_each(|(chunk_index, chunk)| {
@@ -62,14 +82,17 @@ fn main() {
                 // zoom in center
                 let x = x / args.zoom;
                 let y = y / args.zoom;
-
                 let (r, g, b) = mandelbrot::get_color_at(x as f64, y as f64, args.max_iterations);
-                let pixel = Pixel::new(r, g, b);
+
+                let pixel = Pixel::new(r as u8, g as u8, b as u8);
                 chunk[i] = pixel;
                 i += 1;
             }
         });
 
-    let ppm = ppm::write_pixels_to_ppm_string(&pixels, width, height);
-    fs::write(args.output, ppm).unwrap();
+    let path = format!("frame_{}.png", frame_i);
+    match image.save(&path, width, height) {
+        Ok(_) => println!("Saved frame {} to {}", frame_i, path),
+        Err(e) => println!("Error saving frame {}: {}", frame_i, e),
+    };
 }
