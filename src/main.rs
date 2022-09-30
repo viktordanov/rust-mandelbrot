@@ -1,7 +1,6 @@
 mod mandelbrot;
 mod pixel;
 mod png;
-mod ppm;
 
 use clap::Parser;
 use pixel::{Image, Persistable, Pixel};
