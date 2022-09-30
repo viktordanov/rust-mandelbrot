@@ -1,13 +1,6 @@
 use num::Complex;
 use palette::{Srgb, FromColor, Hsv};
 
-fn min<T: PartialOrd>(a: T, b: T) -> T {
-	if a < b {
-		a
-	} else {
-		b
-	}
-}
 
 pub fn get_color_at(x: f64, y: f64, max_iterations: u32) -> (u8, u8, u8) {
     let mut z = Complex::new(0.0, 0.0);
